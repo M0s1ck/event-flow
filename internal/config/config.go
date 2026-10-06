@@ -13,6 +13,11 @@ type Config struct {
 	HTTP     HTTP
 	Postgres Postgres
 	Auth     Auth
+	Swagger  Swagger
+}
+
+type Swagger struct {
+	Enabled bool // SWAGGER_ENABLED — отдавать /swagger/ и /swagger/openapi.yaml
 }
 
 type HTTP struct {
@@ -63,6 +68,9 @@ func Load() (Config, error) {
 			SessionTTL:      l.dur("AUTH_SESSION_TTL", 24*time.Hour),
 			MaxFailedLogins: l.int("AUTH_MAX_FAILED_LOGINS", 5),
 			LockoutDuration: l.dur("AUTH_LOCKOUT_DURATION", 15*time.Minute),
+		},
+		Swagger: Swagger{
+			Enabled: l.bool("SWAGGER_ENABLED", true),
 		},
 	}
 	if err := errors.Join(l.errs...); err != nil {
@@ -130,4 +138,17 @@ func (l *loader) dur(key string, def time.Duration) time.Duration {
 		return def
 	}
 	return d
+}
+
+func (l *loader) bool(key string, def bool) bool {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return def
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		l.errs = append(l.errs, fmt.Errorf("%s: %w", key, err))
+		return def
+	}
+	return b
 }

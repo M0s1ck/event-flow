@@ -15,6 +15,7 @@ import (
 
 	"github.com/M0s1ck/event-flow/internal/auth"
 	"github.com/M0s1ck/event-flow/internal/config"
+	"github.com/M0s1ck/event-flow/internal/swagger"
 )
 
 const (
@@ -45,6 +46,10 @@ func (s *Server) routes() chi.Router {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/health", s.handleHealth)
+
+	if s.cfg.Swagger.Enabled {
+		r.Mount("/swagger", swagger.Routes())
+	}
 
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", s.handleRegister)
